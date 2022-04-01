@@ -344,6 +344,8 @@ class TfMixin(object):
 
     def train_feat(self, data_generator, verbose, shuffle, eval_data, metrics,
                    **kwargs):
+        train_loss_t = []
+        eval_loss_t = []
         for epoch in range(1, self.n_epochs + 1):
             if self.lr_decay:
                 print(f"With lr_decay, epoch {epoch} learning rate: "
@@ -357,15 +359,19 @@ class TfMixin(object):
                     train_loss, _ = self.sess.run(
                         [self.loss, self.training_op], feed_dict)
                     train_total_loss.append(train_loss)
+                # self.save_tf_model('', 'variables/my-model' + '-epoch-' + str(epoch))
+                self.save_variables('variables', 'my-model' + '-epoch-' + str(epoch), inference_only=False)
 
             if verbose > 1:
                 train_loss_str = "train_loss: " + str(
                     round(float(np.mean(train_total_loss)), 4)
                 )
+                train_loss_t.append(round(float(np.mean(train_total_loss)), 4))
                 print(f"\t {colorize(train_loss_str, 'green')}")
-                self.print_metrics(eval_data=eval_data, metrics=metrics,
-                                   **kwargs)
+                eval_loss_temp = self.print_metrics(eval_data=eval_data, metrics=metrics, **kwargs)
+                eval_loss_t.append(eval_loss_temp)
                 print("=" * 30)
+        return train_loss_t, eval_loss_t
 
     def train_seq(self):
         pass  # TODO: combine train_feat and train_seq

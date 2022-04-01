@@ -306,9 +306,10 @@ class WideDeep(Base, TfMixin, EvalMixin):
                                          self.sparse,
                                          self.dense)
 
-        self.train_feat(data_generator, verbose, shuffle, eval_data, metrics,
+        train_loss, eval_loss = self.train_feat(data_generator, verbose, shuffle, eval_data, metrics,
                         **kwargs)
         self.assign_oov()
+        return train_loss, eval_loss
 
     def predict(self, user, item, feats=None, cold_start="average",
                 inner_id=False):

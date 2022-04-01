@@ -75,8 +75,9 @@ class EvalMixin(object):
                     self, eval_data, eval_batch_size
                 )
                 # y_true = eval_data.labels
-                print_metrics_rating(
+                eval_loss = print_metrics_rating(
                     metrics, y_true, y_pred, train=False, **kwargs)
+                return eval_loss
 
         elif self.task == "ranking":
             if train_data:
@@ -205,12 +206,15 @@ def print_metrics_rating(metrics, y_true, y_pred, train=True, **kwargs):
             if m in ["rmse", "loss"]:
                 rmse = np.sqrt(mean_squared_error(y_true, y_pred))
                 print(f"\t eval rmse: {rmse:.4f}")
+                return rmse
             elif m == "mae":
                 mae = mean_absolute_error(y_true, y_pred)
                 print(f"\t eval mae: {mae:.4f}")
+                return mae
             elif m == "r2":
                 r_squared = r2_score(y_true, y_pred)
                 print(f"\t eval r2: {r_squared:.4f}")
+                return r_squared
 
 
 def print_metrics_ranking(metrics, y_prob=None, y_true=None, y_reco_list=None,
