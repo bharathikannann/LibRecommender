@@ -359,7 +359,7 @@ class TfMixin(object):
                     train_loss, _ = self.sess.run(
                         [self.loss, self.training_op], feed_dict)
                     train_total_loss.append(train_loss)
-                # self.save_tf_model('', 'variables/my-model' + '-epoch-' + str(epoch))
+                # self.save_tf_model('', 'models/my-model' + '-epoch-' + str(epoch))
                 self.save_variables('variables', 'my-model' + '-epoch-' + str(epoch), inference_only=False)
 
             if verbose > 1:
@@ -557,6 +557,39 @@ class TfMixin(object):
             # v.load(variables[v.name], session=model.sess)
         model.sess.run(update_ops)
         return model
+
+    @classmethod
+    def early_stopping(cls, train_path, eval_path, window=None, doc_train=0, doc_eval=0):
+        # Load the data
+        train_loss = pd.read_csv(train_path, header=None)
+        eval_loss = pd.read_csv(eval_path, header=None)
+        train_loss = np.ravel(train_loss.to_numpy())
+        eval_loss = np.ravel(eval_loss.to_numpy())
+
+        found = False
+        i = 0
+
+        while (i < len(eval_loss) - 1):
+            after = i + 1
+            if eval_loss[after] > eval_loss[i]:
+                # out of bounds for window
+                found = False
+                if window:
+                    end = len(eval_loss) if after+window > len(eval_loss) else after+window
+                else:
+                    end = len(eval_loss)
+                for j in range(after, end):
+                    # If smaller value found
+                    if ((eval_loss[j] + (eval_loss[i] * doc_eval)) < eval_loss[i]) and (
+                            (train_loss[j] + (train_loss[i] * doc_train)) < train_loss[i]):
+                        i = j
+                        found = True
+                        break
+                if found:
+                    continue
+                return i + 1
+            i = i + 1
+        return len(eval_loss)
 
     def rebuild_graph(self, path, model_name, full_assign=False):
         self._build_model()
